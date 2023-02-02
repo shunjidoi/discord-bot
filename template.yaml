@@ -8,7 +8,7 @@ Globals:
     Timeout: 5
 
 Parameters:
-  DISCORDENDPOINT:
+  DiscordEndpoint:
     Description: Discord Api Endopoint.
     Type: String
   DiscordToken:
@@ -29,8 +29,8 @@ Resources:
   SlashCommandsCallbackFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: .
-      Handler: src.handler.callback
+      CodeUri: ./src
+      Handler: handler.callback
       Runtime: python3.8
       Events:
         HelloWorld:
@@ -40,6 +40,7 @@ Resources:
             Method: POST
       Environment:
         Variables:
+          DISCORD_ENDPOINT: !Ref DiscordEndpoint
           DISCORD_TOKEN: !Ref DiscordToken
           APPLICATION_ID: !Ref ApplicationID
           APPLICATION_PUBLIC_KEY: !Ref ApplicationPublicKey

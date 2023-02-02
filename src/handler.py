@@ -1,5 +1,6 @@
 import json
 import os
+import boto3
 
 import requests
 from nacl.signing import VerifyKey
@@ -33,7 +34,7 @@ def registerCommands():
     headers = {
         "User-Agent": "discord-slash-commands-helloworld",
         "Content-Type": "application/json",
-        "Authorization": DISCORD_TOKEN
+        "Authorization": f"Bot {DISCORD_TOKEN}"
     }
 
     for c in commands:
@@ -76,17 +77,36 @@ def callback(event: dict, context: dict):
             "type": 1  # InteractionResponseType.Pong
         }
     elif req['type'] == 2:  # InteractionType.ApplicationCommand
-        # command options list -> dict
-        opts = {v['name']: v['value'] for v in req['data']['options']} if 'options' in req['data'] else {}
-        print(opts)
+        action = req['data']['name']
+        print(f"action = {action}")
 
-        text = "Hello!"
-        if 'user' in opts:
-            text = f"Hello, <@{opts['user']}>!"
+        ec2 = boto3.resource('ec2')
+        instance = ec2.Instance("i-0c358471181cfc055")
+        print(f"action = {action} start")
+        
+        if action == "start":
+            try:
+                instance.start()
+                instance.wait_until_running()
+                text = 'server online.'
+            except Exception as e:
+                print(e)
+                text = 'failed to start instance.' + str(e)
 
+        if action == "stop":
+            try:
+                instance.stop()
+                instance.wait_until_stopped()
+                text = 'server stopped.'
+            except Exception as e:
+                print(e)
+                text = 'failed to stop instance.' + str(e)
+
+        print(text)
         return {
             "type": 4,  # InteractionResponseType.ChannelMessageWithSource
             "data": {
                 "content": text
             }
         }
+
