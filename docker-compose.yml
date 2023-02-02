@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  pipenv:
+    build: ./dockerfiles/python
+    environment:
+      TZ: Asia/Tokyo
+      PIPENV_VENV_IN_PROJECT: 1
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    env_file: ".env"

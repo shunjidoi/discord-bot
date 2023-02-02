@@ -1,0 +1,15 @@
+---
+version: "3"
+services:
+  develop:
+    build: dockerfiles/develop
+    environment:
+      TZ: Asia/Tokyo
+      PIPENV_VENV_IN_PROJECT: 1
+    tty: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../..:/workspace
+      - ~/.aws:/home/developer/.aws
+      - ~/.gitconfig:/etc/gitconfig
+    working_dir: /workspace/discord-bot
