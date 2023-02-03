@@ -51,6 +51,39 @@ def verify(signature: str, timestamp: str, body: str) -> bool:
     return True
 
 
+def defer(interaction_id, interaction_token, text):
+    # https://discord.com/developers/docs/interactions/receiving-and-responding#responding-to-an-interaction
+    endpoint = f"{DISCORD_ENDPOINT}/interactions/{interaction_id}/{interaction_token}/callback"
+    json = {
+        "type": 4,  # 4=ChannelMessageWithSource / 5=DeferredChannelMessageWithSource 
+        "data": {
+            "content": text,
+        }
+    }
+    r = requests.post(endpoint, json=json)
+    print(r)
+
+
+def start():
+    try:
+        ec2 = boto3.resource('ec2')
+        instance = ec2.Instance("i-0c358471181cfc055")
+        instance.start()
+        # instance.wait_until_running()
+    except Exception as e:
+        print(e)
+
+
+def stop():
+    try:
+        ec2 = boto3.resource('ec2')
+        instance = ec2.Instance("i-0c358471181cfc055")
+        instance.stop()
+        # instance.wait_until_stopped()
+    except Exception as e:
+        print(e)
+
+
 def callback(event: dict, context: dict):
     # API Gateway has weird case conversion, so we need to make them lowercase.
     # See https://github.com/aws/aws-sam-cli/issues/1860
@@ -79,32 +112,23 @@ def callback(event: dict, context: dict):
     elif req['type'] == 2:  # InteractionType.ApplicationCommand
         action = req['data']['name']
         print(f"action = {action}")
-
-        ec2 = boto3.resource('ec2')
-        instance = ec2.Instance("i-0c358471181cfc055")
-        print(f"action = {action} start")
         
-        if action == "start":
-            try:
-                instance.start()
-                instance.wait_until_running()
-                text = 'server online.'
-            except Exception as e:
-                print(e)
-                text = 'failed to start instance.' + str(e)
+        interaction_id = req['id']
+        interaction_token = req['token']
 
+        if action == "start":
+            text = '起こしたからちょい待ち'
+            defer(interaction_id, interaction_token, text)
+            start()
+    
         if action == "stop":
-            try:
-                instance.stop()
-                instance.wait_until_stopped()
-                text = 'server stopped.'
-            except Exception as e:
-                print(e)
-                text = 'failed to stop instance.' + str(e)
+            text = 'もう少ししたら止まるよ'
+            defer(interaction_id, interaction_token, text)
+            stop()
 
         print(text)
         return {
-            "type": 4,  # InteractionResponseType.ChannelMessageWithSource
+            "type": 4,  # 4=ChannelMessageWithSource / 5=DeferredChannelMessageWithSource 
             "data": {
                 "content": text
             }
